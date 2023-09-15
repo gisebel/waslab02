@@ -2,4 +2,6 @@
 
 Students: 
 
-* Beltrán, Gisela
+* Beltrï¿½n, Gisela
+
+* Juanola, MartÃ­
