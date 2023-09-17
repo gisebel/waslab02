@@ -46,6 +46,7 @@ function deleteHandler(tweetID) {
 	
 	req = new XMLHttpRequest();
 	req.open('DELETE', tweetsURI + "/" + tweetID, /*async*/true);
+	req.setRequestHeader("Authorization", localStorage.getItem(tweetID)); 
 	req.onload = function() { 
 		if (req.status == 200) { // 200 OK
 			document.getElementById("tweet_"+tweetID).remove();
@@ -69,16 +70,20 @@ function getTweets() {
 	req.open("GET", tweetsURI, true); 
 	req.onload = function() {
 		if (req.status == 200) { // 200 OK
-			var tweet_list = req.responseText;
+			let tweets = JSON.parse(req.responseText);
 			
-			let tweets = JSON.parse(tweet_list);
-			let htmlTweetList = [];
-			
-			for (let i = 0; i < tweets.length; i++) {
-				htmlTweetList.push(getTweetHTML(tweets[i], "like"));
+			let newHTML = "";
+			for (tt of tweets) {
+				if (localStorage.getItem(tt.id) != null) {
+					newHTML += getTweetHTML(tt, "delete");
+				}
+				else {
+					newHTML += getTweetHTML(tt, "like");
+				}
+				
 			}
 			
-			document.getElementById("tweet_list").innerHTML = htmlTweetList;
+			document.getElementById("tweet_list").innerHTML = newHTML;
 		}
 	};
 	req.send(null); 
@@ -98,6 +103,9 @@ function tweetHandler() {
 			let html = getTweetHTML(nt, "delete");
 			let currentTweets = document.getElementById("tweet_list").innerHTML;
 			document.getElementById("tweet_list").innerHTML = html + currentTweets;
+			
+			localStorage.setItem(nt.id, nt.token);
+			
 		}
 	};
 	req.setRequestHeader("Content-Type","application/json");

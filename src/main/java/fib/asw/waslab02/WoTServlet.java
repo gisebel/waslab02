@@ -1,7 +1,10 @@
 package fib.asw.waslab02;
 
 import java.io.IOException;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.security.*;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
@@ -12,6 +15,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+
 
 @WebServlet(urlPatterns = {"/tweets", "/tweets/*"})
 public class WoTServlet extends HttpServlet {
@@ -69,18 +74,49 @@ public class WoTServlet extends HttpServlet {
 			String text = obj1.getString("text");
 			Tweet tweet = tweetDAO.insertTweet(autor, text);
 			JSONObject obj2 = new JSONObject(tweet);
+			
+			String token = hashId(tweet.getId().toString());
+			//System.out.println("New token generated for ID = " + tweet.getId() + " is {" + token + "}");
+			obj2.append("token", token);
+			
 			response.getWriter().println(obj2.toString());
 		}
 	}
+    
+    private String hashId(String id) {
+    	String myHash = null;
+		try {
+			MessageDigest md = MessageDigest.getInstance("MD5");
+			md.update(id.getBytes());
+	        byte[] digest = md.digest();
+	        myHash = new BigInteger(1, digest).toString(16);
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+          
+    	return myHash;
+    }
     
     @Override
 	// Implements DELETE http://localhost:8080/waslab02/tweets/:id
 	public void doDelete(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException, ServletException {
 
+    	
+    	
+
+    	
     	String uri = req.getRequestURI();
     	int lastIndex = uri.lastIndexOf("/");
-    	long id = Long.valueOf(uri.substring(lastIndex+1));		
+    	Long id = Long.valueOf(uri.substring(lastIndex+1));	
+    	
+    	String token = req.getHeader("Authorization");
+    	
+    	//System.out.print(token);
+    	
+    	String expectedToken = hashId(id.toString());
+    	
+    	if (!token.equals(expectedToken)) throw new ServletException("Token not recognised (ID = " + id + "). Expected " + expectedToken + " but actual " + token + "!!!");
     	
     	boolean dt =  tweetDAO.deleteTweet(id);
     	if (!dt) throw new ServletException();
